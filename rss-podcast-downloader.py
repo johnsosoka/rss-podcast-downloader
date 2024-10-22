@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import argparse
 import time
+import logging
 from urllib.parse import urlparse, unquote
 
 """
@@ -40,6 +41,8 @@ for personal use and should be used responsibly.
 Author: John Sosoka
 """
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def sanitize_title(title, date_str=None):
     """
@@ -59,22 +62,34 @@ def sanitize_title(title, date_str=None):
             date_formatted = date.strftime('%Y-%m-%d')
             sanitized_title = f'{date_formatted}_{sanitized_title}'
         except ValueError as e:
-            print(f"Error parsing date: {e}")
+            logging.error(f"Error parsing date: {e}")
 
     return sanitized_title
 
-
-def download_file(url, filename):
-    """Download a file from a given URL."""
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(filename, 'wb') as file:
-            file.write(response.content)
-        print(f"Downloaded: {filename}")
-    except requests.RequestException as e:
-        print(f"Error downloading file: {e}")
-
+def download_file(url, filename, retries=3):
+    """Download a file from a given URL with retry logic."""
+    attempt = 0
+    while attempt < retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            with open(filename, 'wb') as file:
+                file.write(response.content)
+            if attempt > 0:
+                logging.info(f"Download succeeded after {attempt} retry(ies): {filename}")
+            else:
+                logging.info(f"Downloaded: {filename}")
+            return True
+        except requests.RequestException as e:
+            attempt += 1
+            logging.warning(f"Error downloading file (attempt {attempt}/{retries}): {e}")
+            if attempt < retries:
+                sleep_time = 2 ** attempt  # Exponential backoff: 2, 4, 8 seconds
+                logging.info(f"Retrying in {sleep_time} seconds...")
+                time.sleep(sleep_time)
+            else:
+                logging.error(f"Failed to download {url} after {retries} attempts.")
+    return False
 
 def fetch_rss_feed(url):
     """Fetch the content of the RSS feed."""
@@ -83,11 +98,10 @@ def fetch_rss_feed(url):
         response.raise_for_status()
         return response.content
     except requests.RequestException as e:
-        print(f"Error fetching the RSS feed: {e}")
-        print("Please check the URL and authentication token (if applicable)")
-        print("Exiting...")
+        logging.error(f"Error fetching the RSS feed: {e}")
+        logging.error("Please check the URL and authentication token (if applicable)")
+        logging.error("Exiting...")
         exit(1)
-
 
 def save_text_file(entry, filename):
     """Save podcast details in a text file."""
@@ -97,16 +111,16 @@ def save_text_file(entry, filename):
         file.write(f"Published Date: {entry.get('published', 'N/A')}\n")
         file.write(f"Content: {entry.get('summary', 'N/A')}\n")
 
-
 def parse_and_download(content, save_dir, save_text):
     """Parse the RSS feed and download files."""
     feed = feedparser.parse(content)
 
     # Count total audio files
     total_audio_files = sum(1 for entry in feed.entries if any(link.type == 'audio/mpeg' for link in entry.get('links', [])))
-    print(f"Total audio files to download: {total_audio_files}")
+    logging.info(f"Total audio files to download: {total_audio_files}")
 
     audio_file_counter = 0
+    successful_downloads = 0
     for entry in feed.entries:
         if 'links' in entry:
             for link in entry.links:
@@ -120,15 +134,16 @@ def parse_and_download(content, save_dir, save_text):
                     _, file_extension = os.path.splitext(parsed_url.path)
                     filename = os.path.join(save_dir, title + file_extension)
 
-                    download_file(link.href, filename)
-                    if save_text:
-                        print(f"Saving additional details in text file {filename}")
-                        save_text_file(entry, filename)
-                    print(f"Downloading audio file {audio_file_counter} of {total_audio_files}")
-                    print("Download Complete! Sleeping for 1 second...")
+                    # Attempt to download the file
+                    if download_file(link.href, filename):
+                        successful_downloads += 1
+                        if save_text:
+                            logging.info(f"Saving additional details in text file {filename}")
+                            save_text_file(entry, filename)
+                    logging.info(f"Downloading audio file {audio_file_counter} of {total_audio_files}")
+                    logging.info("Sleeping for 1 second...")
                     time.sleep(1)
-    print("Completed! Downloaded {} / {} audio files".format(audio_file_counter, total_audio_files))
-
+    logging.info("Completed! Successfully downloaded {} / {} audio files".format(successful_downloads, total_audio_files))
 
 def main():
     parser = argparse.ArgumentParser(description='RSS Podcast Downloader')
@@ -140,7 +155,6 @@ def main():
     content = fetch_rss_feed(args.rss_url)
     if content:
         parse_and_download(content, args.save_dir, args.save_text)
-
 
 if __name__ == "__main__":
     main()

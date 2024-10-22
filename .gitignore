@@ -2,6 +2,10 @@
 *.iml
 .idea
 
+# Default podcasts download dir
+
+podcasts*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
