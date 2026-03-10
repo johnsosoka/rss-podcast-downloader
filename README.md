@@ -64,6 +64,7 @@ python rss-podcast-downloader.py <RSS_FEED_URL> <SAVE_DIRECTORY> [OPTIONS]
 
 - `--num-episodes <N>`: Check only the `<N>` most recent episodes in the feed for new downloads. This is useful for quickly syncing the latest episodes without checking the entire feed history.
 - `--save_text`: Flag to save additional episode details (like the summary) in a separate `.txt` file alongside the audio file.
+- `--mp3-genre`: Flag to specify .mp3 *Genre* tag. If unspecified, the script uses tag from the RSS feed and untimately defaults to *Podcast*. 
 
 ## Examples
 

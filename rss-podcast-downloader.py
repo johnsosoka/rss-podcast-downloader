@@ -204,7 +204,7 @@ def save_text_file(entry, filename):
         file.write(f"Published Date: {entry.get('published', 'N/A')}\n")
         file.write(f"Content: {entry.get('summary', 'N/A')}\n")
 
-def set_mp3_tags(filename, entry, feed):
+def set_mp3_tags(filename, entry, feed, mp3_genre):
     """Set MP3 tags using metadata from the RSS feed."""
     try:
         audio = MP3(filename, ID3=ID3)
@@ -240,16 +240,20 @@ def set_mp3_tags(filename, entry, feed):
     if summary:
         audio.tags.add(COMM(encoding=3, lang='eng', text=summary))
         
-    # Genre from RSS category
-    if hasattr(feed.feed, 'tags') and feed.feed.tags:
+    # Genre from a parameter or from the feed's tags, defaulting to "Podcast"
+    if mp3_genre:
+        audio.tags.add(TCON(encoding=3, text=mp3_genre))
+    elif hasattr(feed.feed, 'tags') and feed.feed.tags:
         genre = feed.feed.tags[0].term
         audio.tags.add(TCON(encoding=3, text=genre))
+    else:
+        audio.tags.add(TCON(encoding=3, text='Podcast'))
 
     audio.save()
     logging.info(f"Successfully set MP3 tags for: {filename}")
 
 
-def parse_and_download(content, save_dir, save_text, num_episodes=None, conn=None, feed_id=None, feed=None):
+def parse_and_download(content, save_dir, save_text, num_episodes=None, conn=None, feed_id=None, feed=None, mp3_genre=None):
     """Parse the RSS feed and download files."""
     if not conn or not feed_id or not feed:
         logging.error("Database connection, feed_id, or feed object not provided.")
@@ -315,7 +319,7 @@ def parse_and_download(content, save_dir, save_text, num_episodes=None, conn=Non
 
             # Set MP3 tags
             if filename.lower().endswith('.mp3'):
-                set_mp3_tags(filename, entry, feed)
+                set_mp3_tags(filename, entry, feed, mp3_genre)
 
             if save_text:
                 save_text_file(entry, filename)
@@ -332,6 +336,7 @@ def main():
     parser.add_argument('save_dir', help='Directory to save downloaded files')
     parser.add_argument('--save_text', action='store_true', help='Flag to save text files with extra episode data')
     parser.add_argument('--num-episodes', type=int, default=None, help='Number of additional episodes to download')
+    parser.add_argument('--mp3-genre', type=str, default=None, help='Genre to set in MP3 tags (Podcast is used if not provided)')
     args = parser.parse_args()
 
     # Create save_dir if it doesn't exist
@@ -345,7 +350,7 @@ def main():
             feed = feedparser.parse(content)
             conn = setup_database()
             feed_id = get_or_create_feed(conn, args.rss_url, feed.feed.get('title', 'N/A'))
-            parse_and_download(content, args.save_dir, args.save_text, args.num_episodes, conn, feed_id, feed)
+            parse_and_download(content, args.save_dir, args.save_text, args.num_episodes, conn, feed_id, feed, args.mp3_genre)
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}", exc_info=True)
     finally:
