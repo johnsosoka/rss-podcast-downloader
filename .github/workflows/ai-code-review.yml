@@ -20,11 +20,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: AI Code Review
-        uses: AleksandrFurmenkovOfficial/ai-code-review@main
+        uses: AleksandrFurmenkovOfficial/ai-code-review@v1.0
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           ai_provider: 'openai'
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           openai_model: 'gpt-4o'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          file_extensions: '.py,.js,.ts,.tsx,.go,.rs,.java,.kt,.swift,.rb,.php,.c,.cpp,.h,.hpp,.cs,.scala,.r,.m,.mm'
-          exclude_paths: 'node_modules/,dist/,build/,vendor/,target/,out/,.next/,coverage/,*.min.js,*.min.css,package-lock.json,yarn.lock,poetry.lock,Cargo.lock,go.sum,*.test.js,*.test.ts,*.test.tsx,*.spec.js,*.spec.ts,*.spec.tsx,__tests__/,test/,tests/,fixtures/,mocks/,*.generated.*,*.pb.go,*.swagger.json'
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          pr_number: ${{ github.event.number }}
+          include_extensions: '.py,.js,.ts,.tsx,.go,.rs,.java,.kt,.swift,.rb,.php,.c,.cpp,.h,.hpp,.cs,.scala,.r,.m,.mm'
+          exclude_paths: 'node_modules/,dist/,build/,vendor/,target/,out/,.next/,coverage/,*.min.js,*.min.css,package-lock.json,yarn.lock,poetry.lock,Cargo.lock,go.sum,__tests__/,test/,tests/,fixtures/,mocks/,*.generated.*'
