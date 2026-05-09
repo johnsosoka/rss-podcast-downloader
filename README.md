@@ -1,5 +1,7 @@
 # RSS Podcast Downloader
 
+![AI Code Review](https://github.com/johnsosoka/rss-podcast-downloader/actions/workflows/ai-code-review.yml/badge.svg)
+
 A powerful and flexible Python script to download, manage, and archive podcast episodes from any RSS feed.
 
 ## Description
@@ -82,3 +84,9 @@ python rss-podcast-downloader.py "http://example.com/podcast.rss" "./podcasts/My
 ```bash
 python rss-podcast-downloader.py "http://another-feed.com/rss" "./podcasts/AnotherShow" --save_text
 ```
+
+## AI Code Review
+
+All pull requests are automatically reviewed by GPT-4o via [ai-code-review](https://github.com/AleksandrFurmenkovOfficial/ai-code-review). The AI checks for code quality, security issues, performance concerns, and maintainability.
+
+Reviews run on every PR open and update. Results are posted as inline comments on the pull request.
