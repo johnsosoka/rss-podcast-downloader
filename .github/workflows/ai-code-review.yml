@@ -1,4 +1,5 @@
 # AI Code Review Workflow
+# Uses centralized reusable workflow
 # Requires: OPENAI_API_KEY repository or organization secret
 
 name: AI Code Review
@@ -13,21 +14,6 @@ permissions:
 
 jobs:
   review:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: AI Code Review
-        uses: AleksandrFurmenkovOfficial/ai-code-review@v1.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ai_provider: 'openai'
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          openai_model: 'gpt-4o'
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
-          pr_number: ${{ github.event.number }}
-          include_extensions: '.py,.js,.ts,.tsx,.go,.rs,.java,.kt,.swift,.rb,.php,.c,.cpp,.h,.hpp,.cs,.scala,.r,.m,.mm'
-          exclude_paths: 'node_modules/,dist/,build/,vendor/,target/,out/,.next/,coverage/,*.min.js,*.min.css,package-lock.json,yarn.lock,poetry.lock,Cargo.lock,go.sum,__tests__/,test/,tests/,fixtures/,mocks/,*.generated.*'
+    uses: johnsosoka/.github/.github/workflows/ai-code-review.yml@main
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
