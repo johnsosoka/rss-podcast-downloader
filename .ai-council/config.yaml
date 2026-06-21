@@ -1,0 +1,135 @@
+# AI Council Configuration for rss-podcast-downloader
+# Managed by Devin / Sosoka Labs
+
+version: "1"
+
+# -- Review Settings ----------------------------------------------------------
+review_depth: standard
+max_files: 50
+max_lines: 3000
+max_diff_size: 100000
+comment_on_forks: false
+skip_drafts: true
+skip_labels:
+  - "skip-ai-review"
+  - "wip"
+
+# Skip generated files, lockfiles, and binary assets
+skip_patterns:
+  # Lockfiles
+  - "package-lock.json"
+  - "yarn.lock"
+  - "poetry.lock"
+  - "Cargo.lock"
+  - "Gemfile.lock"
+  - "uv.lock"
+  # Generated/Build artifacts
+  - "dist/"
+  - "build/"
+  - "node_modules/"
+  - "__pycache__/"
+  - "*.pyc"
+  - "*.pyo"
+  - ".eggs/"
+  - "*.egg-info/"
+  - ".tox/"
+  # Virtual environments
+  - ".venv/"
+  - "venv/"
+  # Test snapshots
+  - "*.snap"
+  # Binary/media files
+  - "*.jpg"
+  - "*.png"
+  - "*.gif"
+  - "*.ico"
+  - "*.svg"
+  - "*.woff"
+  - "*.woff2"
+  - "*.ttf"
+  - "*.eot"
+  # Coverage / IDE
+  - ".coverage"
+  - "coverage.json"
+  - "htmlcov/"
+  - ".idea/"
+  - ".vscode/"
+  - ".DS_Store"
+
+# -- Cost & Timeout Control ---------------------------------------------------
+budget_usd: 5.00
+agent_timeout_seconds: 300
+total_timeout_seconds: 900
+rate_limit_threshold: 50
+debug: false
+
+# -- Agent Configuration ------------------------------------------------------
+agents:
+  router:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1-mini
+    temperature: 0.1
+    max_tokens: 2000
+
+  security:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.2
+    max_tokens: 16000
+
+  quality:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.3
+    max_tokens: 16000
+
+  architecture:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.3
+    max_tokens: 16000
+
+  performance:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.3
+    max_tokens: 16000
+
+  documentation:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.3
+    max_tokens: 16000
+
+  devops:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1
+    temperature: 0.2
+    max_tokens: 16000
+
+  synthesis:
+    enabled: true
+    model: openai
+    model_name: openai/gpt-4.1-mini
+    temperature: 0.2
+    max_tokens: 16000
+
+# -- Skills -------------------------------------------------------------------
+skills_path: .ai-council/skills
+default_agent_skills: null
+
+# -- LLM Provider Settings ----------------------------------------------------
+providers:
+  openai:
+    api_key: null
+  anthropic:
+    api_key: null
+  fireworks:
+    api_key: null

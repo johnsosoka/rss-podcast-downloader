@@ -1,0 +1,85 @@
+# AI Council Code Review v0.2.0
+# Replaces: ai-code-review.yml (single-pass GPT reviewer)
+#
+# This workflow runs a council of specialist AI agents that review PRs
+# with cross-file awareness and project-specific Skills.
+#
+# Managed by Devin / Sosoka Labs
+
+name: AI Council Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, feature/ai-council-v0.2.0]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-review:
+    name: AI Council Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.pull_request.draft == false && github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+
+    steps:
+      - name: Checkout AI Council
+        uses: actions/checkout@v4
+        with:
+          repository: Sosoka-Labs/ai-council-code-review
+          ref: v0.2.0
+          path: ai-council
+
+      - name: Checkout PR HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          path: target-repo
+
+      - name: Fetch base branch
+        working-directory: target-repo
+        run: git fetch origin ${{ github.event.pull_request.base.ref }} --depth=100
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: '0.6.0'
+
+      - name: Install AI Council dependencies
+        working-directory: ai-council
+        run: uv pip install --system -e .
+
+      - name: Run AI Council Review
+        working-directory: target-repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          AI_COUNCIL__CONFIG_PATH: .ai-council/config.yaml
+        run: |
+          python -m ai_council_review \
+            --pr-number "$PR_NUMBER" \
+            --repo "$REPO" \
+            --base-sha "$BASE_SHA" \
+            --head-sha "$HEAD_SHA" \
+            --base-ref "$BASE_REF" \
+            --head-ref "$HEAD_REF"
